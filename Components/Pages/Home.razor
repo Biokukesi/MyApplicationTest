@@ -1,0 +1,258 @@
+﻿@page "/"
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4" Style="display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden;">
+    <MudCard Elevation="5" Class="mb-6 fade-in" Style="border-radius: 24px; overflow: hidden; box-shadow: 0 12px 28px rgba(0,0,0,0.12);">
+        <MudCardHeader Class="ripple-bg py-6" Style="color: #FFFFFF; padding: 24px;">
+            <div class="d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.Hub" Class="mr-3 pulse" Size="Size.Large" />
+                <MudText Typo="Typo.h3" Style="font-weight: 700;">Azure Service Bus Client</MudText>
+            </div>
+        </MudCardHeader>
+        <MudCardContent Class="pa-6">
+            <MudText Typo="Typo.h4" Class="slide-in-left mb-2" Style="font-weight: 600; color: #455A64; letter-spacing: 0.5px;">Enterprise Application Integration Hub</MudText>
+            <MudText Typo="Typo.body1" Class="slide-in-right mb-6" Style="line-height: 1.8; color: #616161;">
+                This platform demonstrates enterprise application integration at <b>FQM Kansanshi Mining PLC</b> using Azure Service Bus messaging.
+                Send and receive messages between your business systems through a unified communication layer.
+            </MudText>
+
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudPaper Elevation="3" Class="pa-5 slide-in-left hover-lift glow" Style="background: linear-gradient(135deg, #FFD180 0%, #FFAB40 100%); color: #212121; border-radius: 16px; height: 100%;">
+                        <div class="d-flex mb-3">
+                            <MudIcon Icon="@Icons.Material.Filled.Send" Class="mr-2 rotate-icon" Color="Color.Inherit" Size="Size.Large" />
+                            <MudText Typo="Typo.h5" Style="font-weight: 600;">Message Sender</MudText>
+                        </div>
+                        <MudText Typo="Typo.body1" Style="line-height: 1.6; margin-bottom: 24px;">
+                            Publish messages to Service Bus queues and topics to integrate with other applications in the mining operation ecosystem.
+                        </MudText>
+                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Send" FullWidth="true" Size="Size.Large" Class="mt-3 btn-animated" Href="/send" Style="background-color: #455A64; color: #FFFFFF; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 500; border-radius: 8px; padding: 12px;">
+                            Start Sending
+                        </MudButton>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudPaper Elevation="3" Class="pa-5 slide-in-right hover-lift glow" Style="background: linear-gradient(135deg, #A5D6A7 0%, #81C784 100%); color: #212121; border-radius: 16px; height: 100%;">
+                        <div class="d-flex mb-3">
+                            <MudIcon Icon="@Icons.Material.Filled.Message" Class="mr-2 rotate-icon" Color="Color.Inherit" Size="Size.Large" />
+                            <MudText Typo="Typo.h5" Style="font-weight: 600;">Message Receiver</MudText>
+                        </div>
+                        <MudText Typo="Typo.body1" Style="line-height: 1.6; margin-bottom: 24px;">
+                            Subscribe to and process messages from Service Bus queues and topics to enable real-time data exchange.
+                        </MudText>
+                        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Message" FullWidth="true" Size="Size.Large" Class="mt-3 btn-animated" Href="/receive" Style="background-color: #455A64; color: #FFFFFF; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 500; border-radius: 8px; padding: 12px;">
+                            Start Receiving
+                        </MudButton>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    <MudCard Elevation="5" Class="slide-in-up" Style="border-radius: 24px; overflow: hidden; box-shadow: 0 12px 28px rgba(0,0,0,0.12);">
+        <MudCardHeader Class="ripple-bg" Style="color: #FFFFFF; padding: 24px;">
+            <div class="d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.Rocket" Class="mr-3" Size="Size.Medium" />
+                <MudText Typo="Typo.h5" Style="font-weight: 600;">Getting Started</MudText>
+            </div>
+        </MudCardHeader>
+        <MudCardContent Class="pa-6">
+            <MudGrid>
+                <MudItem xs="12" md="4">
+                    <MudPaper Elevation="0" Class="pa-5 hover-lift d-flex flex-column align-center" Style="border-radius: 16px; background-color: #FAFAFA; border: 1px solid #EEEEEE;">
+                        <div class="d-flex justify-center align-center mb-3" style="height: 80px; width: 80px; border-radius: 50%; background-color: #E3F2FD;">
+                            <MudIcon Icon="@Icons.Material.Filled.Send" Size="Size.Large" Style="color: #1E88E5;" />
+                        </div>
+                        <MudText Typo="Typo.h6" Align="Align.Center" Style="font-weight: 500; color: #455A64; margin-bottom: 12px;">1. Connect Services</MudText>
+                        <MudText Typo="Typo.body2" Align="Align.Center" Style="line-height: 1.6; color: #616161;">
+                            Define which mining applications will send and receive messages
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" md="4">
+                    <MudPaper Elevation="0" Class="pa-5 hover-lift d-flex flex-column align-center" Style="border-radius: 16px; background-color: #FAFAFA; border: 1px solid #EEEEEE;">
+                        <div class="d-flex justify-center align-center mb-3" style="height: 80px; width: 80px; border-radius: 50%; background-color: #F1F8E9;">
+                            <MudIcon Icon="@Icons.Material.Filled.Settings" Size="Size.Large" Style="color: #689F38;" />
+                        </div>
+                        <MudText Typo="Typo.h6" Align="Align.Center" Style="font-weight: 500; color: #455A64; margin-bottom: 12px;">2. Configure</MudText>
+                        <MudText Typo="Typo.body2" Align="Align.Center" Style="line-height: 1.6; color: #616161;">
+                            Set up message formats and routing between systems
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+
+                <MudItem xs="12" md="4">
+                    <MudPaper Elevation="0" Class="pa-5 hover-lift d-flex flex-column align-center" Style="border-radius: 16px; background-color: #FAFAFA; border: 1px solid #EEEEEE;">
+                        <div class="d-flex justify-center align-center mb-3" style="height: 80px; width: 80px; border-radius: 50%; background-color: #FFF3E0;">
+                            <MudIcon Icon="@Icons.Material.Filled.MonitorHeart" Size="Size.Large" Style="color: #FF9800;" />
+                        </div>
+                        <MudText Typo="Typo.h6" Align="Align.Center" Style="font-weight: 500; color: #455A64; margin-bottom: 12px;">3. Monitor</MudText>
+                        <MudText Typo="Typo.body2" Align="Align.Center" Style="line-height: 1.6; color: #616161;">
+                            View message flow and integration health between mining operations systems
+                        </MudText>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    <MudPaper Class="pa-4 mt-6 fade-in" Elevation="0" Style="margin-top: auto; background: transparent; text-align: center;">
+        <MudText Typo="Typo.body2" Style="color: #757575; font-weight: 500;">
+            FQM Kansanshi Mining PLC Enterprise Application Integration Platform
+        </MudText>
+        <div class="d-flex justify-center mt-2">
+            <MudIconButton Icon="@Icons.Custom.Brands.Microsoft" Color="Color.Default" Size="Size.Small" />
+            <MudIconButton Icon="@Icons.Material.Filled.Cloud" Color="Color.Default" Size="Size.Small" />
+            <MudIconButton Icon="@Icons.Material.Filled.Api" Color="Color.Default" Size="Size.Small" />
+        </div>
+    </MudPaper>
+</MudContainer>
+
+
+<style>
+    .fade-in {
+        animation: fadeIn 1.2s cubic-bezier(0.26, 0.53, 0.74, 1.48);
+    }
+
+    @@keyframes fadeIn {
+        0% {
+            opacity: 0;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    .slide-in-left {
+        animation: slideInLeft 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    @@keyframes slideInLeft {
+        0% {
+            transform: translateX(-100px);
+            opacity: 0;
+        }
+
+        100% {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .slide-in-right {
+        animation: slideInRight 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    @@keyframes slideInRight {
+        0% {
+            transform: translateX(100px);
+            opacity: 0;
+        }
+
+        100% {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .slide-in-up {
+        animation: slideInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    @@keyframes slideInUp {
+        0% {
+            transform: translateY(50px);
+            opacity: 0;
+        }
+
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.05);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    .hover-lift {
+        transition: all 0.4s ease;
+    }
+
+        .hover-lift:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+    .ripple-bg {
+        background: linear-gradient(135deg, #455A64 0%, #607D8B 100%);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+    }
+
+    @@keyframes gradientBG {
+        0% {
+            background-position: 0% 50%;
+        }
+
+        50% {
+            background-position: 100% 50%;
+        }
+
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+
+    .rotate-icon {
+        transition: transform 0.5s ease;
+    }
+
+    .hover-lift:hover .rotate-icon {
+        transform: rotate(15deg);
+    }
+
+    .glow {
+        transition: all 0.3s ease;
+    }
+
+        .glow:hover {
+            box-shadow: 0 0 15px rgba(255, 209, 128, 0.7);
+        }
+
+    .btn-animated {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+        .btn-animated:after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: all 0.6s ease;
+        }
+
+        .btn-animated:hover:after {
+            left: 100%;
+        }
+</style>

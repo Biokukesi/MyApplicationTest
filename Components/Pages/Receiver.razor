@@ -1,0 +1,365 @@
+﻿@page "/receive"
+@using MyApplicationTest.Components.Layout
+@using Azure.Messaging.ServiceBus
+@using Microsoft.JSInterop
+@using MyApplicationTest.Services
+@inject ServiceBusReceiverService ReceiverService
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageContainer Title="Service Bus Receiver"
+               Icon="@Icons.Material.Filled.CloudDownload"
+               Description="Monitor and manage Service Bus message reception">
+    <MudGrid>
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="4" Class="pa-6 h-100">
+                <MudStack Spacing="4">
+                    @if (availableEntities.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Warning"
+                                  Variant="Variant.Outlined"
+                                  Dense="true"
+                                  Class="mb-4">
+                            No Service Bus entities found. Please configure your service bus connections.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudStack Spacing="4">
+                            <MudSelect T="string"
+                                       Value="selectedEntityDisplayName"
+                                       ValueChanged="OnEntityChanged"
+                                       Label="Select Entity"
+                                       Variant="Variant.Outlined"
+                                       Disabled="@isReceiving"
+                                       AnchorOrigin="Origin.BottomCenter"
+                                       Dense="true"
+                                       Clearable="true"
+                                       ToStringFunc="@(e => e)"
+                                       SearchBox="true"
+                                       SearchBoxAutoFocus="true">
+                                @foreach (var entity in availableEntities)
+                                {
+                                    <MudSelectItem Value="@GetDisplayName(entity)">
+                                        <div class="d-flex justify-space-between align-center">
+                                            <MudText Typo="Typo.body2">@GetDisplayName(entity)</MudText>
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                                                @(entity.Type == EntityType.Queue ? "Queue" : "Topic/Sub")
+                                            </MudChip>
+                                        </div>
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
+
+                            <MudSelect T="ServiceBusReceiveMode"
+                                       Value="selectedReceiveMode"
+                                       ValueChanged="OnReceiveModeChanged"
+                                       Label="Receive Mode"
+                                       Variant="Variant.Outlined"
+                                       Disabled="@isReceiving"
+                                       AnchorOrigin="Origin.BottomCenter"
+                                       Dense="true">
+                                <MudSelectItem Value="ServiceBusReceiveMode.PeekLock">
+                                    <div class="d-flex align-center">
+                                        <MudIcon Icon="@Icons.Material.Filled.RemoveRedEye" Class="mr-2" />
+                                        Peek and Lock
+                                    </div>
+                                </MudSelectItem>
+                                <MudSelectItem Value="ServiceBusReceiveMode.ReceiveAndDelete">
+                                    <div class="d-flex align-center">
+                                        <MudIcon Icon="@Icons.Material.Filled.Delete" Class="mr-2" />
+                                        Receive and Delete
+                                    </div>
+                                </MudSelectItem>
+                            </MudSelect>
+
+                            <MudStack Row="true" Spacing="4" Class="mt-4 button-stack">
+                                <MudButton OnClick="StartReceiving"
+                                           Disabled="@isReceiving"
+                                           StartIcon="@Icons.Material.Filled.PlayArrow"
+                                           Color="Color.Success"
+                                           Variant="Variant.Filled"
+                                           FullWidth="true"
+                                           Size="Size.Large">
+                                    Start Receiving
+                                </MudButton>
+                                <MudButton OnClick="StopReceiving"
+                                           Disabled="@(!isReceiving)"
+                                           StartIcon="@Icons.Material.Filled.Stop"
+                                           Color="Color.Error"
+                                           Variant="Variant.Filled"
+                                           FullWidth="true"
+                                           Size="Size.Large">
+                                    Stop Receiving
+                                </MudButton>
+                            </MudStack>
+                        </MudStack>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" md="6">
+            <MudPaper Elevation="4" Class="pa-6 h-100">
+                <MudStack Spacing="4" Style="height: 100%;">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h5" Color="Color.Secondary">
+                            <MudIcon Icon="@Icons.Material.Filled.Message" Class="mr-2" />
+                            Received Messages
+                        </MudText>
+                        <MudChip T="int" Color="Color.Primary" Size="Size.Small">
+                            @DisplayedMessages.Count Messages
+                        </MudChip>
+                    </MudStack>
+                    @if (DisplayedMessages.Count == 0)
+                    {
+                        <MudAlert Severity="Severity.Info"
+                                  Variant="Variant.Outlined"
+                                  Dense="true">
+                            No messages received yet.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudPaper Elevation="0"
+                                  Class="pa-0"
+                                  Style="flex-grow: 1; overflow-y: auto;">
+                            <MudList T="ReceivedMessage" Clickable="false">
+                                @foreach (var message in DisplayedMessages)
+                                {
+                                    <MudListItem T="ReceivedMessage">
+                                        <MudPaper Elevation="1"
+                                                  Class="pa-4 mb-2 message-card"
+                                                  Style="border-left: 4px solid var(--mud-palette-primary);">
+                                            <MudStack Spacing="2">
+                                                <MudText Typo="Typo.body2"
+                                                         Style="word-break: break-word;
+                                                                max-height: 10rem;
+                                                                overflow-y: auto;">
+                                                    @message.Content
+                                                </MudText>
+                                                <MudDivider Class="my-2" />
+                                                <MudStack Row="true"
+                                                          Spacing="2"
+                                                          Class="message-footer">
+                                                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                                        <MudChip Color="Color.Default" Size="Size.Small">
+                                                            @message.ReceivedTime
+                                                        </MudChip>
+                                                        <MudChip Color="Color.Info" Size="Size.Small">
+                                                            @message.EntityName
+                                                        </MudChip>
+                                                    </MudStack>
+                                                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                                        <MudChip Color="Color.Dark" Size="Size.Small">
+                                                            ID: @message.MessageId.Substring(0, Math.Min(8, message.MessageId.Length))...
+                                                        </MudChip>
+                                                        @if (selectedReceiveMode == ServiceBusReceiveMode.PeekLock && message.ServiceBusReceivedMessage != null)
+                                                        {
+                                                            <MudButton Size="Size.Small"
+                                                                       Variant="Variant.Filled"
+                                                                       Color="Color.Success"
+                                                                       OnClick="() => CompleteMessageAsync(message)"
+                                                                       StartIcon="@Icons.Material.Filled.Check"
+                                                                       Disabled="@message.IsCompleted">
+                                                                Complete
+                                                            </MudButton>
+                                                        }
+                                                    </MudStack>
+                                                </MudStack>
+                                            </MudStack>
+                                        </MudPaper>
+                                    </MudListItem>
+                                }
+                            </MudList>
+                        </MudPaper>
+                    }
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</PageContainer>
+
+<style>
+    .message-card {
+        transition: all 0.3s ease;
+    }
+
+        .message-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+    .scrollable-messages {
+        scrollbar-width: thin;
+        scrollbar-color: var(--mud-palette-primary) transparent;
+    }
+
+        .scrollable-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scrollable-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .scrollable-messages::-webkit-scrollbar-thumb {
+            background-color: var(--mud-palette-primary);
+            border-radius: 4px;
+        }
+
+    @@media (max-width: 600px) {
+        .button-stack
+
+    {
+        flex-direction: column;
+    }
+
+    }
+
+    @@media (max-width: 400px) {
+        .message-footer
+
+    {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    }</style>
+
+@code {
+    // Existing code remains unchanged
+    private List<ServiceBusEntity> availableEntities = new();
+    private string selectedEntityDisplayName = string.Empty;
+    private ServiceBusReceiveMode selectedReceiveMode = ServiceBusReceiveMode.PeekLock;
+    private bool isReceiving = false;
+    private DateTimeOffset? receiveInitiationTime;
+
+    private ServiceBusEntity SelectedEntity => availableEntities.FirstOrDefault(e => GetDisplayName(e) == selectedEntityDisplayName);
+
+    private string GetDisplayName(ServiceBusEntity e) => e.Type == EntityType.Queue
+        ? $"Queue: {e.Name}"
+        : $"Topic: {e.Name} / Subscription: {e.SubscriptionName}";
+
+    private string GetEntityName(ServiceBusEntity e) => e.Type == EntityType.Queue
+        ? e.Name
+        : $"{e.Name}/{e.SubscriptionName}";
+
+    private IReadOnlyList<ReceivedMessage> DisplayedMessages => ReceiverService.ReceivedMessages
+        .Where(m => m.EntityName == (SelectedEntity != null ? GetEntityName(SelectedEntity) : null))
+        .OrderByDescending(m => m.ReceivedTime)
+        .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            availableEntities = (await ReceiverService.GetAvailableEntitiesAsync()).ToList();
+            if (availableEntities.Any())
+            {
+                selectedEntityDisplayName = GetDisplayName(availableEntities.First());
+            }
+        }
+        catch (Exception ex)
+        {
+            await HandleErrorAsync(ex, "Error fetching entities");
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        ReceiverService.MessageReceived += OnMessageReceived;
+    }
+
+    private void OnEntityChanged(string newDisplayName)
+    {
+        selectedEntityDisplayName = newDisplayName;
+        StateHasChanged();
+    }
+
+    private void OnReceiveModeChanged(ServiceBusReceiveMode newMode)
+    {
+        selectedReceiveMode = newMode;
+        StateHasChanged();
+    }
+
+    private async Task StartReceiving()
+    {
+        if (SelectedEntity != null && !isReceiving)
+        {
+            try
+            {
+                receiveInitiationTime = DateTimeOffset.Now;
+                await JS.InvokeVoidAsync("console.log", $"Receive initiated at: {receiveInitiationTime:o}");
+                await ReceiverService.StartReceivingAsync(SelectedEntity, selectedReceiveMode);
+                isReceiving = true;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                await HandleErrorAsync(ex, "Error starting receiver");
+            }
+        }
+    }
+
+    private async Task StopReceiving()
+    {
+        if (SelectedEntity != null && isReceiving)
+        {
+            try
+            {
+                await ReceiverService.StopReceivingAsync(SelectedEntity);
+                isReceiving = false;
+                receiveInitiationTime = null;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                await HandleErrorAsync(ex, "Error stopping receiver");
+            }
+        }
+    }
+
+    private async Task CompleteMessageAsync(ReceivedMessage message)
+    {
+        if (message.ServiceBusReceivedMessage != null && !message.IsCompleted)
+        {
+            try
+            {
+                await ReceiverService.CompleteMessageAsync(SelectedEntity, message);
+                message.IsCompleted = true;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                await HandleErrorAsync(ex, "Error completing message");
+            }
+        }
+    }
+
+    private async void OnMessageReceived(object sender, ReceivedMessage message)
+    {
+        if (receiveInitiationTime.HasValue)
+        {
+            DateTimeOffset messageReceivedTime = DateTimeOffset.Now;
+            TimeSpan duration = messageReceivedTime - receiveInitiationTime.Value;
+
+            await JS.InvokeVoidAsync("console.log",
+                $"Message received at: {messageReceivedTime:o}, Duration: {duration.TotalMilliseconds} ms, " +
+                $"Entity: {message.EntityName}, ID: {message.MessageId}");
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleErrorAsync(Exception ex, string errorContext)
+    {
+        Console.WriteLine($"{errorContext}: {ex.Message}");
+        await JS.InvokeVoidAsync("console.error", $"{errorContext}: {ex.Message}");
+    }
+
+    public void Dispose()
+    {
+        ReceiverService.MessageReceived -= OnMessageReceived;
+    }
+}

@@ -1,0 +1,262 @@
+﻿@inherits LayoutComponentBase
+@using System.Threading.Tasks
+@using MudBlazor
+
+<!-- Add Google Fonts for modern typography -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<MudThemeProvider Theme="@_theme" IsDarkMode="@_isDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<div class="background-animation @(_isDarkMode ? "dark-mode" : "light-mode")">
+    <div class="animation-element"></div>
+    <div class="animation-element"></div>
+    <div class="animation-element"></div>
+</div>
+
+<MudLayout>
+    <MudAppBar Elevation="1" Fixed="true" Class="app-bar-blur glass-effect">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       OnClick="@DrawerToggle"
+                       Class="menu-button" />
+        <img src="/fqm.png" alt="Company Logo" class="logo-transition" />
+        <MudText Typo="Typo.h5" Class="ml-3 title-animation gradient-text">KAN_Azure Service Bus Client</MudText>
+        <MudSpacer />
+    </MudAppBar>
+
+    <MudDrawer id="nav-drawer"
+               @bind-Open="_drawerOpen"
+               ClipMode="DrawerClipMode.Always"
+               Elevation="2"
+               Class="drawer-animation glass-effect">
+        <MudDrawerHeader Class="drawer-header">
+            <MudText Typo="Typo.h6" Class="gradient-text">Navigation</MudText>
+        </MudDrawerHeader>
+        <NavMenu />
+    </MudDrawer>
+
+    <MudMainContent Class="mt-16 pa-4 main-content-fade glass-panel">
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+<!-- Error UI remains the same -->
+
+<style>
+    /* Modern Typography */
+    html {
+        font-family: 'Poppins', sans-serif;
+    }
+
+    /* Enhanced Background Animation */
+    .background-animation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+        transition: background-color 0.5s ease;
+    }
+
+    .animation-element {
+        position: absolute;
+        border-radius: 50%;
+        opacity: 0.15;
+        filter: blur(90px);
+        animation: float 20s infinite ease-in-out;
+        mix-blend-mode: soft-light;
+    }
+
+    .light-mode .animation-element {
+        opacity: 0.1;
+    }
+
+    /* Glassmorphism Effects */
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15) !important;
+    }
+
+    .dark-mode .glass-effect {
+        background: rgba(26, 26, 39, 0.7) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* Modern AppBar */
+    .app-bar-blur {
+        backdrop-filter: blur(15px) saturate(200%);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .logo-transition {
+        height: 40px;
+        margin-right: 15px;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        transition: all 0.3s ease;
+    }
+
+        .logo-transition:hover {
+            transform: scale(1.08) rotate(-5deg);
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+        }
+
+    /* Gradient Text Effect */
+    .gradient-text {
+        background: linear-gradient(45deg, var(--mud-palette-warning) 0%, var(--mud-palette-secondary) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        font-weight: 600;
+    }
+
+    /* Enhanced Title Animation */
+    .title-animation {
+        position: relative;
+        overflow: hidden;
+        padding-bottom: 2px;
+    }
+
+        .title-animation::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--mud-palette-warning), var(--mud-palette-secondary));
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .title-animation:hover::after {
+            width: 100%;
+        }
+
+    /* Modern Menu Items */
+    .menu-item {
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        margin: 4px 0;
+    }
+
+        .menu-item:hover {
+            background: rgba(var(--mud-palette-warning-rgb), 0.1) !important;
+            transform: translateX(8px);
+        }
+
+    /* Glass Panel for Main Content */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.9) !important;
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        margin: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    }
+
+    .dark-mode .glass-panel {
+        background: rgba(26, 26, 39, 0.8) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Enhanced Floating Animation */
+    @@keyframes float {
+        0%, 100% {
+            transform: translateY(0) translateX(0) scale(1);
+        }
+
+        33% {
+            transform: translateY(-40px) translateX(20px) scale(1.05);
+        }
+
+        66% {
+            transform: translateY(20px) translateX(-40px) scale(0.95);
+        }
+    }
+
+    /* Responsive Adjustments */
+    @@media (max-width: 600px) {
+        .logo-transition {
+            height: 35px;
+            margin-right: 10px;
+        }
+
+        .title-animation {
+            font-size: 1.1rem !important;
+        }
+
+        .glass-panel {
+            margin: 8px;
+            border-radius: 12px;
+        }
+    }
+</style>
+
+
+@code {
+    private bool _drawerOpen = true;
+    private bool _isDarkMode = false;
+    private MudTheme _theme;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        _theme = new MudTheme
+            {
+                PaletteLight = _lightPalette,
+                LayoutProperties = new LayoutProperties()
+                {
+                    DefaultBorderRadius = "8px",
+                    DrawerWidthLeft = "260px",
+                    AppbarHeight = "64px"
+                },
+                Typography = new Typography()
+                {
+                    H6 = new H6Typography()
+                    {
+                        FontFamily = new[] { "Roboto", "Helvetica", "Arial", "sans-serif" },
+                        FontSize = "1.25rem",
+                        FontWeight = "500",
+                        LineHeight = "1.6",
+                        LetterSpacing = ".0075em"
+                    }
+                }
+            };
+    }
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private readonly PaletteLight _lightPalette = new()
+        {
+            Black = "#110e2d",
+            Primary = "#7e6fff",
+            Secondary = "#3dcb6c",
+            AppbarText = "#424242",
+            AppbarBackground = "rgba(255,255,255,0.8)",
+            DrawerBackground = "#ffffff",
+            GrayLight = "#e8e8e8",
+            GrayLighter = "#f9f9f9",
+            Background = "#f9f9f9",
+            Surface = "#ffffff",
+            DrawerIcon = "#424242",
+            DrawerText = "#424242",
+            Success = "#3dcb6c",
+            Info = "#4a86ff",
+            Warning = "#ffb545",
+            Error = "#ff3f5f",
+        };
+
+
+    public string DarkLightModeButtonIcon => _isDarkMode
+        ? Icons.Material.Rounded.LightMode
+        : Icons.Material.Outlined.DarkMode;
+}

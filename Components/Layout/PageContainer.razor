@@ -1,0 +1,129 @@
+﻿@namespace MyApplicationTest.Components.Layout
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="page-container">
+    <MudPaper Elevation="0" Class="page-header mb-6">
+        <MudStack Row="false" Spacing="2">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4" Class="header-row">
+                @if (!string.IsNullOrEmpty(Icon))
+                {
+                    <MudIcon Icon="@Icon"
+                             Size="Size.Large"
+                             Color="Color.Primary"
+                             Class="mr-2" />
+                }
+                <MudText Typo="Typo.h4" Color="Color.Primary">
+                    @Title
+                </MudText>
+            </MudStack>
+
+            @if (!string.IsNullOrEmpty(Description))
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="page-description">
+                    @Description
+                </MudText>
+            }
+
+            @if (HeaderActions != null)
+            {
+                <MudStack Row="true" Justify="Justify.FlexEnd" Class="header-actions mt-2">
+                    @HeaderActions
+                </MudStack>
+            }
+        </MudStack>
+    </MudPaper>
+
+    <MudPaper Elevation="0" Class="page-content">
+        @ChildContent
+    </MudPaper>
+</MudContainer>
+
+@code {
+    /// <summary>
+    /// The title of the page
+    /// </summary>
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional description or subtitle for the page
+    /// </summary>
+    [Parameter]
+    public string Description { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional Material Design icon for the page header
+    /// </summary>
+    [Parameter]
+    public string Icon { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional additional actions to be displayed in the header
+    /// </summary>
+    [Parameter]
+    public RenderFragment? HeaderActions { get; set; }
+
+    /// <summary>
+    /// The main content of the page
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}
+
+<style>
+    .page-container {
+        position: relative;
+        width: 100%;
+        padding: 0;
+    }
+
+    .page-header {
+        background-color: var(--mud-palette-background-grey);
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--mud-palette-border-default);
+        margin-bottom: 1.5rem;
+    }
+
+    .page-content {
+        padding: 0;
+    }
+
+    /* Custom classes for inner header layout */
+    .header-row {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .page-description {
+        margin-left: 1rem; /* Original ml-10 can be adjusted as needed */
+    }
+
+    .header-actions {
+        /* Ensure header actions align right on larger screens */
+        width: 100%;
+    }
+
+    /* Responsive adjustments for smaller screens */
+    @@media (max-width: 600px) {
+        .page-header
+
+    {
+        padding: 1rem;
+    }
+
+    .header-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .page-description {
+        margin-left: 0;
+        margin-top: 0.5rem;
+    }
+
+    .header-actions {
+        justify-content: center;
+        margin-top: 1rem;
+    }
+
+    }
+</style>

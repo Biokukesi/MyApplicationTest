@@ -1,0 +1,297 @@
+﻿@page "/send"
+@using MyApplicationTest.Services
+@inject ServiceBusSenderService ServiceBusService
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 px-4">
+    <div class="d-flex flex-column align-center mb-6">
+        <MudIcon Icon="@Icons.Material.Filled.Cloud" Color="Color.Primary" Size="Size.Large" Class="mb-3" />
+        <MudText Typo="Typo.h3" Align="Align.Center" Class="mud-font-weight-bold" Color="Color.Primary">Service Bus Manager</MudText>
+        <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="mt-2 mb-4 mud-text-secondary">Send messages to Azure Service Bus queues and topics</MudText>
+    </div>
+
+    <MudPaper Elevation="3" Class="pa-4 mb-6">
+        <MudGrid>
+            <!-- Left Section - Entity Selection -->
+            <MudItem xs="12" md="5">
+                <MudCard Elevation="0" Class="mud-height-full">
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Color="Color.Primary">
+                                <MudIcon Icon="@Icons.Material.Filled.Storage" />
+                            </MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Select Destination</MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">Choose where to send your message</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudButtonGroup Color="Color.Primary" Class="mb-4 d-flex" Variant="Variant.Outlined">
+                            <MudButton OnClick="@(() => OnEntityTypeChanged(EntityType.Queue))" 
+                                       Variant="@(selectedEntityType == EntityType.Queue ? Variant.Filled : Variant.Outlined)"
+                                       Class="flex-grow-1"
+                                       StartIcon="@Icons.Material.Filled.List">
+                                Queues
+                            </MudButton>
+                            <MudButton OnClick="@(() => OnEntityTypeChanged(EntityType.Topic))" 
+                                       Variant="@(selectedEntityType == EntityType.Topic ? Variant.Filled : Variant.Outlined)"
+                                       Class="flex-grow-1"
+                                       StartIcon="@Icons.Material.Filled.Message">
+                                Topics
+                            </MudButton>
+                        </MudButtonGroup>
+
+                        <MudAutocomplete T="string" 
+                                       Label="Select Entity" 
+                                       @bind-Value="selectedEntity"
+                                       SearchFunc="@SearchEntitiesAsync"
+                                       AdornmentIcon="@Icons.Material.Filled.Search"
+                                       AdornmentColor="Color.Primary"
+                                       Variant="Variant.Outlined"
+                                       Disabled="@(entities.Count == 0 || isLoading)"
+                                       Class="mt-2">
+                            <ItemTemplate>
+                                <div class="d-flex align-center">
+                                    <MudIcon Icon="@(selectedEntityType == EntityType.Queue ? Icons.Material.Filled.List : Icons.Material.Filled.Topic)" 
+                                             Size="Size.Small" 
+                                             Class="mr-2" 
+                                             Color="Color.Primary" />
+                                    <MudText>@context</MudText>
+                                </div>
+                            </ItemTemplate>
+                        </MudAutocomplete>
+
+                        @if (entities.Count == 0 && !isLoading)
+                        {
+                            <MudAlert Severity="Severity.Info" Class="mt-4" Variant="Variant.Outlined">
+                                No @(selectedEntityType.ToString().ToLower())s available
+                            </MudAlert>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudDivider Vertical="true" FlexItem="true" Class="mx-4 my-2" />
+
+            <!-- Right Section - Message Composition -->
+            <MudItem xs="12" md="6">
+                <MudCard Elevation="0" Class="mud-height-full">
+                    <MudCardHeader>
+                        <CardHeaderAvatar>
+                            <MudAvatar Color="Color.Secondary">
+                                <MudIcon Icon="@Icons.Material.Filled.Edit" />
+                            </MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Compose Message</MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">Create a message to send to @selectedEntity</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudTextField @bind-Value="messageContent"
+                                      Label="Message Content"
+                                      Variant="Variant.Outlined"
+                                      Lines="5"
+                                      Placeholder="Enter your message here..."
+                                      Disabled="@(selectedEntity == null)"
+                                      Error="@(!isMessageContentValid && messageContent != null)"
+                                      ErrorText="Message content is required"
+                                      Class="mt-2" />
+
+                        <MudTextField @bind-Value="messageId"
+                                      Label="Message ID"
+                                      Placeholder="Optional identifier for your message"
+                                      Variant="Variant.Outlined"
+                                      AdornmentIcon="@Icons.Material.Filled.Fingerprint"
+                                      Adornment="Adornment.Start"
+                                      Class="mt-4"
+                                      Disabled="@(selectedEntity == null)" />
+
+                        <div class="d-flex justify-space-between align-center mt-6">
+                            <MudTooltip Text="Clear all fields">
+                                <MudIconButton Icon="@Icons.Material.Filled.Clear" 
+                                               Color="Color.Error" 
+                                               OnClick="@ClearForm"
+                                               Disabled="@(isLoading || string.IsNullOrWhiteSpace(messageContent) && string.IsNullOrWhiteSpace(messageId))" />
+                            </MudTooltip>
+                            
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Size="Size.Large"
+                                       OnClick="SendMessage"
+                                       Disabled="@(isLoading || selectedEntity == null || string.IsNullOrWhiteSpace(messageContent))"
+                                       StartIcon="@Icons.Material.Filled.Send"
+                                       Class="px-6">
+                                Send Message
+                            </MudButton>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    @if (!string.IsNullOrEmpty(statusMessage))
+    {
+        <MudPaper Elevation="2" Class="pa-4 my-4">
+            <MudAlert Severity="alertSeverity" 
+                      Variant="Variant.Filled" 
+                      ShowCloseIcon="true" 
+                      CloseIconClicked="() => { statusMessage = string.Empty; }">
+                <div class="d-flex align-center">
+                    @if (alertSeverity == Severity.Success)
+                    {
+                        <MudChip T="object" Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" Class="mr-3">
+                            @(DateTimeOffset.Now.ToString("HH:mm:ss"))
+                        </MudChip>
+                    }
+                    @statusMessage
+                </div>
+            </MudAlert>
+        </MudPaper>
+    }
+
+    @if (isLoading)
+    {
+        <div class="position-fixed" style="top:0;left:0;right:0;bottom:0;background-color:rgba(0,0,0,0.2);z-index:9999;display:flex;justify-content:center;align-items:center;">
+            <MudPaper Elevation="25" Class="pa-6 rounded-lg">
+                <div class="d-flex flex-column align-center">
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+                    <MudText Class="mt-4">Processing...</MudText>
+                </div>
+            </MudPaper>
+        </div>
+    }
+</MudContainer>
+
+@code {
+    private List<string> entities = new();
+    private EntityType selectedEntityType = EntityType.Queue;
+    private string selectedEntity;
+    private string messageContent;
+    private string messageId;
+    private string statusMessage;
+    private Severity alertSeverity;
+    private bool isLoading;
+
+    private bool isMessageContentValid => !string.IsNullOrWhiteSpace(messageContent);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEntities();
+    }
+
+    private async Task LoadEntities()
+    {
+        try
+        {
+            isLoading = true;
+            entities.Clear();
+
+            if (selectedEntityType == EntityType.Queue)
+            {
+                entities.AddRange(await ServiceBusService.GetAvailableQueuesAsync());
+            }
+            else
+            {
+                entities.AddRange(await ServiceBusService.GetAvailableTopicsAsync());
+            }
+
+            selectedEntity = entities.FirstOrDefault();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error loading entities: {ex.Message}";
+            alertSeverity = Severity.Error;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task<IEnumerable<string>> SearchEntitiesAsync(string value, CancellationToken cancellationToken)
+    {
+        // If string is null or empty, show all entities
+        if (string.IsNullOrEmpty(value))
+            return entities;
+
+        return entities.Where(x => x.Contains(value, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task OnEntityTypeChanged(EntityType type)
+    {
+        selectedEntityType = type;
+        selectedEntity = null;
+        await LoadEntities();
+    }
+
+    private void ClearForm()
+    {
+        messageContent = string.Empty;
+        messageId = string.Empty;
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(messageContent))
+            return;
+
+        try
+        {
+            isLoading = true;
+            var entity = new ServiceBusEntity
+                {
+                    Name = selectedEntity,
+                    Type = selectedEntityType
+                };
+            DateTimeOffset sendInitiated = DateTimeOffset.Now;
+
+            var sentMessageId = await ServiceBusService.SendMessageAsync(
+                entity,
+                messageContent,
+                messageId: string.IsNullOrWhiteSpace(messageId) ? null : messageId);
+
+            statusMessage = $"Message sent successfully to {selectedEntity}. ID: {sentMessageId}";
+            alertSeverity = Severity.Success;
+
+            DateTimeOffset messageReached = DateTimeOffset.Now;
+            await JS.InvokeVoidAsync("console.log",
+                $"Send initiated: {sendInitiated:o}, Message reached: {messageReached:o}, Duration: {(messageReached - sendInitiated).TotalMilliseconds} ms");
+
+            // Clear form
+            messageContent = string.Empty;
+            messageId = string.Empty;
+
+            // Auto-clear status message after 5 seconds using InvokeAsync
+            _ = Task.Delay(5000).ContinueWith(_ =>
+            {
+                InvokeAsync(() =>
+                {
+                    if (statusMessage.Contains(sentMessageId))
+                    {
+                        statusMessage = string.Empty;
+                        StateHasChanged();
+                    }
+                });
+            });
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Error sending message: {ex.Message}";
+            alertSeverity = Severity.Error;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // Dispose code here
+    }
+}
